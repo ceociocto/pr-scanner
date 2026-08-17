@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, Route, Routes, useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -26,10 +26,13 @@ import {
 } from "recharts";
 import { fetchOverview } from "./api";
 import type { DashboardOverview } from "./types";
+import ScanDetailsPage from "./pages/ScanDetailsPage";
+import PullRequestPage from "./pages/PullRequestPage";
 
 const RANGE_OPTIONS = [7, 30, 90];
 
 export default function App() {
+  const location = useLocation();
   const [rangeDays, setRangeDays] = useState(30);
   const [repository, setRepository] = useState("");
   const overview = useQuery({
@@ -47,48 +50,58 @@ export default function App() {
         isRefreshing={overview.isFetching}
       />
       <div className="page-frame">
-        <header className="page-intro">
-          <div>
-            <p className="eyebrow">PR / SIGNAL · ENGINEERING QUALITY</p>
-            <h1>把扫描结果，变成一眼能读懂的信号。</h1>
-            <p className="intro-copy">
-              面向管理层的工程质量驾驶舱：先看整体健康度，再追溯仓库、规则和具体 PR。
-            </p>
-          </div>
-          <div className="filter-bar" aria-label="Dashboard filters">
-            <div className="filter-label">
-              <Filter size={15} />
-              筛选
-            </div>
-            <select
-              value={repository}
-              onChange={(event) => setRepository(event.target.value)}
-              aria-label="仓库"
-            >
-              <option value="">全部仓库</option>
-              {overview.data?.repositories.map((item) => (
-                <option key={item.repository} value={item.repository}>
-                  {item.repository}
-                </option>
-              ))}
-            </select>
-            <div className="range-switcher" role="group" aria-label="时间范围">
-              {RANGE_OPTIONS.map((option) => (
-                <button
-                  className={rangeDays === option ? "active" : ""}
-                  key={option}
-                  onClick={() => setRangeDays(option)}
+        {location.pathname !== "/" && (
+          <Routes>
+            <Route path="/scans/:batchId" element={<ScanDetailsPage />} />
+            <Route path="/pull-requests/:repository/:number" element={<PullRequestPage />} />
+          </Routes>
+        )}
+        {location.pathname === "/" && (
+          <>
+            <header className="page-intro">
+              <div>
+                <p className="eyebrow">PR / SIGNAL · ENGINEERING QUALITY</p>
+                <h1>把扫描结果，变成一眼能读懂的信号。</h1>
+                <p className="intro-copy">
+                  面向管理层的工程质量驾驶舱：先看整体健康度，再追溯仓库、规则和具体 PR。
+                </p>
+              </div>
+              <div className="filter-bar" aria-label="Dashboard filters">
+                <div className="filter-label">
+                  <Filter size={15} />
+                  筛选
+                </div>
+                <select
+                  value={repository}
+                  onChange={(event) => setRepository(event.target.value)}
+                  aria-label="仓库"
                 >
-                  {option} 天
-                </button>
-              ))}
-            </div>
-          </div>
-        </header>
+                  <option value="">全部仓库</option>
+                  {overview.data?.repositories.map((item) => (
+                    <option key={item.repository} value={item.repository}>
+                      {item.repository}
+                    </option>
+                  ))}
+                </select>
+                <div className="range-switcher" role="group" aria-label="时间范围">
+                  {RANGE_OPTIONS.map((option) => (
+                    <button
+                      className={rangeDays === option ? "active" : ""}
+                      key={option}
+                      onClick={() => setRangeDays(option)}
+                    >
+                      {option} 天
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </header>
 
-        {overview.isLoading && <LoadingState />}
-        {overview.isError && <ErrorState onRetry={() => void overview.refetch()} />}
-        {overview.data && <DashboardContent overview={overview.data} />}
+            {overview.isLoading && <LoadingState />}
+            {overview.isError && <ErrorState onRetry={() => void overview.refetch()} />}
+            {overview.data && <DashboardContent overview={overview.data} />}
+          </>
+        )}
       </div>
     </main>
   );
@@ -349,6 +362,9 @@ function ScanStatusPanel({ scan }: { scan: DashboardOverview["currentScan"] }) {
           <b>{scan.totalRepositories}</b> 仓库
         </span>
       </div>
+      <Link className="panel-link" to={`/scans/${scan.id}`}>
+        查看批次详情 <ArrowUpRight size={14} />
+      </Link>
       {scan.lastError && (
         <div className="inline-error">
           <AlertTriangle size={14} />

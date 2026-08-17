@@ -61,3 +61,63 @@ export interface DashboardOverview {
     topIssues: string[];
   }>;
 }
+
+export interface ScanDetails {
+  id: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  currentPhase: string | null;
+  totalRepositories: number;
+  completedRepositories: number;
+  failedRepositories: number;
+  totalPullRequests: number;
+  evaluatedCount: number;
+  averageScore: number | null;
+  lastError: string | null;
+  repositories: string[];
+  repositoryRuns: Array<{
+    id: string;
+    repository: string | null;
+    status: string;
+    startedAt: string;
+    completedAt: string | null;
+    currentPhase: string | null;
+    totalPullRequests: number;
+    evaluatedCount: number;
+    progressTotal: number;
+    progressCompleted: number;
+    averageScore: number | null;
+    errorMessage: string | null;
+  }>;
+  summary: DashboardSummary;
+}
+
+export interface PullRequestDetails {
+  repository: string;
+  pullNumber: number;
+  title: string;
+  author: string;
+  mergedAt: string | null;
+  createdAt: string;
+  url: string;
+  changedFiles: number;
+  additions: number;
+  deletions: number;
+  evaluations: Array<{
+    evaluatorId: string;
+    name: string;
+    severity: "pass" | "warn" | "fail";
+    message: string;
+    score: number;
+    metadata: Record<string, unknown> | null;
+    aiModel: string | null;
+    aiTokensUsed: number | null;
+    evaluatedAt: string;
+  }>;
+  aggregateScore: number;
+  passCount: number;
+  warnCount: number;
+  failCount: number;
+  evaluatedAt: string | null;
+}

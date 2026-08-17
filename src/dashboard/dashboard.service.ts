@@ -66,7 +66,7 @@ export class DashboardService {
       currentScan: latestBatch ? toScanStatusSummary(latestBatch) : null,
       summary,
       trend: buildTrend(filteredRangeRows),
-      repositories: buildRepositorySummaries(latestBatch, latestRows),
+      repositories: buildRepositorySummaries(latestBatch, filteredLatestRows),
       evaluatorRisks: buildEvaluatorRisks(filteredLatestRows),
       riskPullRequests: buildRiskPullRequests(filteredLatestRows),
     };
