@@ -1,0 +1,78 @@
+# PR Scanner Configuration
+# For more details, see: https://github.com/ceociocto/pr-scanner
+
+github:
+  platform: github.com
+  token: ${GITHUB_TOKEN}
+  # For GitHub Enterprise Server:
+  # platform: github-enterprise
+  # baseUrl: https://github.my-company.com/api/v3
+  # apiVersion: "3.16"
+
+repositories:
+  - name: octocat/Hello-World
+  # - name: my-company/backend-api
+  #   mergedAfter: 2025-01-01
+  # - name: my-enterprise/internal-tools
+  #   platform: github-enterprise
+  #   token: ${GHE_TOKEN}
+
+scan:
+  includeUnmerged: false
+  maxPullRequests: 0
+  concurrency: 5
+
+standards:
+  prSize:
+    enabled: true
+    warning: 400
+    ideal: 300
+  commitConvention:
+    enabled: true
+    allowedTypes: [feat, fix, refactor, docs, test, chore, perf, build, ci]
+  reviewerCount:
+    enabled: true
+    minimum: 1
+  ciStatus:
+    enabled: true
+    requireAllChecks: false
+  timeToMerge:
+    enabled: true
+    warningHours: 120
+    criticalHours: 240
+  timeToReview:
+    enabled: true
+    warningHours: 24
+  labels:
+    enabled: false
+  branchNaming:
+    enabled: true
+    pattern: "^(feat|fix|refactor|docs|test|chore|perf)/.+"
+  linkedIssues:
+    enabled: true
+    issuePattern: "(#\\d+|[A-Z]+-\\d+)"
+  codeChurn:
+    enabled: true
+    maxFilesWarning: 20
+  selfMerge:
+    enabled: true
+  revertRate:
+    enabled: true
+  reviewCommentCount:
+    enabled: true
+    warnZeroComments: true
+    highCommentThreshold: 30
+
+output:
+  format: console
+  detailLevel: detailed
+
+cache:
+  dbPath: ./data/pr-scanner.db
+  ttlHours: 24
+
+ai:
+  enabled: false
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  # apiKey: ${ANTHROPIC_API_KEY}
