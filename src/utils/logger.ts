@@ -1,4 +1,4 @@
-import { dim, blue, yellow, red, green } from "picocolors";
+import pc from "picocolors";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -15,27 +15,27 @@ export class Logger {
 
   debug(message: string, ...args: unknown[]) {
     if (this.debugEnabled) {
-      process.stderr.write(dim(`[DEBUG] ${message}`) + "\n");
+      process.stderr.write(pc.dim(`[DEBUG] ${message}`) + "\n");
       if (args.length > 0) {
-        process.stderr.write(dim(JSON.stringify(args, null, 2)) + "\n");
+        process.stderr.write(pc.dim(JSON.stringify(args, null, 2)) + "\n");
       }
     }
   }
 
   info(message: string) {
-    process.stderr.write(blue(`[INFO] ${message}`) + "\n");
+    process.stderr.write(pc.blue(`[INFO] ${message}`) + "\n");
   }
 
   warn(message: string) {
-    process.stderr.write(yellow(`[WARN] ${message}`) + "\n");
+    process.stderr.write(pc.yellow(`[WARN] ${message}`) + "\n");
   }
 
   error(message: string) {
-    process.stderr.write(red(`[ERROR] ${message}`) + "\n");
+    process.stderr.write(pc.red(`[ERROR] ${message}`) + "\n");
   }
 
   success(message: string) {
-    process.stderr.write(green(`[OK] ${message}`) + "\n");
+    process.stderr.write(pc.green(`[OK] ${message}`) + "\n");
   }
 
   /** Write non-log output to stdout (for pipe/redirect) */

@@ -16,7 +16,7 @@ import { closeDb } from "../../data/db/connection.js";
 import { createReporter } from "../../reporters/reporter-factory.js";
 import { createLlmFromConfig } from "../../ai/llm-factory.js";
 import { createTokenBudget } from "../../ai/token-counter.js";
-import { bold } from "picocolors";
+import pc from "picocolors";
 import { randomUUID } from "node:crypto";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
@@ -119,7 +119,7 @@ export function scanCommand(): Command {
           process.exit(2);
         }
 
-        logger.info(bold(`\n📊 Scanning ${repoConfig.name}...`));
+        logger.info(pc.bold(`\n📊 Scanning ${repoConfig.name}...`));
 
         try {
           // List merged PRs
@@ -211,9 +211,9 @@ export function scanCommand(): Command {
       const elapsed = Date.now() - startTime;
       const summary = scanResult.summary;
 
-      logger.info(bold("\n" + "═".repeat(50)));
-      logger.info(bold("  📋 Scan Summary"));
-      logger.info(bold("═".repeat(50)));
+      logger.info(pc.bold("\n" + "═".repeat(50)));
+      logger.info(pc.bold("  📋 Scan Summary"));
+      logger.info(pc.bold("═".repeat(50)));
       logger.info(`Total merged PRs scanned: ${scanResult.totalPullRequests}`);
       logger.info(`Average quality score: ${(summary.averageScore * 50).toFixed(1)}%`);
       logger.info(`  ✅ All pass: ${summary.allPassCount}`);

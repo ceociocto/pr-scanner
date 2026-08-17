@@ -1,0 +1,72 @@
+# PR Scanner — 实际运行配置
+# 使用方法: npx tsx bin/pr-scanner.ts scan -c pr-scanner.config.yaml
+
+github:
+  platform: github.com
+  token: ${GITHUB_TOKEN}
+
+repositories:
+  - name: octocat/Hello-World
+  - name: facebook/react
+    mergedAfter: 2025-07-01
+  - name: vercel/next.js
+    mergedAfter: 2025-08-01
+
+scan:
+  includeUnmerged: false
+  maxPullRequests: 10        # 每个仓库最多扫描 10 个 PR（演示用）
+  concurrency: 3
+
+standards:
+  prSize:
+    enabled: true
+    warning: 400
+    ideal: 300
+  commitConvention:
+    enabled: true
+    allowedTypes: [feat, fix, refactor, docs, test, chore, perf, build, ci]
+  reviewerCount:
+    enabled: true
+    minimum: 1
+  ciStatus:
+    enabled: true
+    requireAllChecks: false
+  timeToMerge:
+    enabled: true
+    warningHours: 120
+    criticalHours: 240
+  timeToReview:
+    enabled: true
+    warningHours: 24
+  labels:
+    enabled: false
+  branchNaming:
+    enabled: true
+    pattern: "^(feat|fix|refactor|docs|test|chore|perf)/.+"
+  linkedIssues:
+    enabled: true
+  codeChurn:
+    enabled: true
+    maxFilesWarning: 20
+  selfMerge:
+    enabled: true
+  revertRate:
+    enabled: true
+  reviewCommentCount:
+    enabled: true
+    warnZeroComments: true
+    highCommentThreshold: 30
+
+output:
+  format: console
+  detailLevel: detailed
+
+cache:
+  dbPath: ./data/pr-scanner.db
+  ttlHours: 24
+
+ai:
+  enabled: false
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  # apiKey: ${ANTHROPIC_API_KEY}

@@ -77,8 +77,13 @@ export function handleError(error: unknown): void {
   }
 
   if (error instanceof Error) {
-    if (error.message.includes("EEXIT:")) {
-      // Commander exit override — not a real error
+    // Commander exit override — not a real error
+    // Commander throws errors with messages like "(outputHelp)" or "EEXIT:0"
+    if (
+      error.message.includes("EEXIT:") ||
+      error.message.startsWith("(") ||
+      error.message === "CommanderError"
+    ) {
       return;
     }
 

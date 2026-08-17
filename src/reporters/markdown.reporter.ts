@@ -1,6 +1,6 @@
 import type { Reporter } from "./reporter.js";
 import type { ScanResult, PullRequestEvaluation } from "../scanner/types.js";
-import { pc } from "picocolors";
+import pc from "picocolors";
 
 /** Markdown format reporter */
 export class MarkdownReporter implements Reporter {
