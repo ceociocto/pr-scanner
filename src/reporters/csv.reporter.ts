@@ -44,9 +44,7 @@ export class CsvReporter implements Reporter {
       Fail: String(item.failCount),
       URL: item.url,
       MergedAt: item.mergedAt,
-      Evaluators: item.results
-        .map((r) => `${r.evaluatorId}:${r.severity}`)
-        .join("; "),
+      Evaluators: item.results.map((r) => `${r.evaluatorId}:${r.severity}`).join("; "),
     }));
 
     const summaryCsv = Papa.unparse(summaryRows);

@@ -1,5 +1,10 @@
 import type { LanguageModel } from "ai";
-import type { LlmClientConfig, LlmResponse, LlmStructuredResponse, PromptContext } from "./types.js";
+import type {
+  LlmClientConfig,
+  LlmResponse,
+  LlmStructuredResponse,
+  PromptContext,
+} from "./types.js";
 
 /**
  * Abstract LLM client interface.
@@ -52,27 +57,30 @@ class AiSdkLlmClient implements LlmClient {
     const { generateText } = await import("ai");
     const { withRetry } = await import("./retry-strategy.js");
 
-    return withRetry(async () => {
-      const result = await generateText({
-        model: this.aiModel,
-        system: systemPrompt,
-        prompt: userPrompt,
-        maxTokens: this.config.maxTokens,
-        abortSignal: AbortSignal.timeout(this.config.timeoutMs),
-      });
+    return withRetry(
+      async () => {
+        const result = await generateText({
+          model: this.aiModel,
+          system: systemPrompt,
+          prompt: userPrompt,
+          maxTokens: this.config.maxTokens,
+          abortSignal: AbortSignal.timeout(this.config.timeoutMs),
+        });
 
-      return {
-        text: result.text,
-        usage: result.usage
-          ? {
-              promptTokens: result.usage.promptTokens,
-              completionTokens: result.usage.completionTokens,
-              totalTokens: result.usage.promptTokens + result.usage.completionTokens,
-            }
-          : undefined,
-        model: this.config.model,
-      };
-    }, { maxRetries: this.config.maxRetries });
+        return {
+          text: result.text,
+          usage: result.usage
+            ? {
+                promptTokens: result.usage.promptTokens,
+                completionTokens: result.usage.completionTokens,
+                totalTokens: result.usage.promptTokens + result.usage.completionTokens,
+              }
+            : undefined,
+          model: this.config.model,
+        };
+      },
+      { maxRetries: this.config.maxRetries },
+    );
   }
 
   async generateStructured<T>(
@@ -83,28 +91,31 @@ class AiSdkLlmClient implements LlmClient {
     const { generateObject } = await import("ai");
     const { withRetry } = await import("./retry-strategy.js");
 
-    return withRetry(async () => {
-      const result = await generateObject<T>({
-        model: this.aiModel,
-        system: systemPrompt,
-        prompt: userPrompt,
-        schema: schema as any,
-        maxTokens: this.config.maxTokens,
-        abortSignal: AbortSignal.timeout(this.config.timeoutMs),
-      });
+    return withRetry(
+      async () => {
+        const result = await generateObject<T>({
+          model: this.aiModel,
+          system: systemPrompt,
+          prompt: userPrompt,
+          schema: schema as any,
+          maxTokens: this.config.maxTokens,
+          abortSignal: AbortSignal.timeout(this.config.timeoutMs),
+        });
 
-      return {
-        text: JSON.stringify(result.object),
-        data: result.object,
-        usage: result.usage
-          ? {
-              promptTokens: result.usage.promptTokens,
-              completionTokens: result.usage.completionTokens,
-              totalTokens: result.usage.promptTokens + result.usage.completionTokens,
-            }
-          : undefined,
-        model: this.config.model,
-      };
-    }, { maxRetries: this.config.maxRetries });
+        return {
+          text: JSON.stringify(result.object),
+          data: result.object,
+          usage: result.usage
+            ? {
+                promptTokens: result.usage.promptTokens,
+                completionTokens: result.usage.completionTokens,
+                totalTokens: result.usage.promptTokens + result.usage.completionTokens,
+              }
+            : undefined,
+          model: this.config.model,
+        };
+      },
+      { maxRetries: this.config.maxRetries },
+    );
   }
 }

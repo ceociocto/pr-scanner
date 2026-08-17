@@ -60,18 +60,20 @@ export async function fetchPRDataBatch(
     const pr = prs[i];
     const index = i;
 
-    const promise = fetchPRData(provider, owner, repo, pr).then((data) => {
-      results[index] = data;
-      onProgress?.(index + 1, prs.length);
-    }).catch((error) => {
-      results[index] = {
-        pullRequest: pr,
-        reviews: [],
-        commits: [],
-        checkRuns: [],
-      };
-      onProgress?.(index + 1, prs.length);
-    });
+    const promise = fetchPRData(provider, owner, repo, pr)
+      .then((data) => {
+        results[index] = data;
+        onProgress?.(index + 1, prs.length);
+      })
+      .catch((error) => {
+        results[index] = {
+          pullRequest: pr,
+          reviews: [],
+          commits: [],
+          checkRuns: [],
+        };
+        onProgress?.(index + 1, prs.length);
+      });
 
     executing.push(promise);
 

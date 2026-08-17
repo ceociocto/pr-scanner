@@ -1,4 +1,10 @@
-import type { EnrichedPullRequest, PullRequestData, ReviewData, CommitData, CheckRunData } from "../github/types.js";
+import type {
+  EnrichedPullRequest,
+  PullRequestData,
+  ReviewData,
+  CommitData,
+  CheckRunData,
+} from "../github/types.js";
 
 /** Input data from fetcher */
 export interface RawPRData {
@@ -22,21 +28,21 @@ export function enrichPR(data: RawPRData, repository: string): EnrichedPullReque
   const firstReviewAt = submittedReviews.length > 0 ? submittedReviews[0].submittedAt : null;
 
   // Compute time to first review
-  const timeToFirstReviewMs = firstReviewAt && pr.createdAt
-    ? new Date(firstReviewAt).getTime() - new Date(pr.createdAt).getTime()
-    : null;
+  const timeToFirstReviewMs =
+    firstReviewAt && pr.createdAt
+      ? new Date(firstReviewAt).getTime() - new Date(pr.createdAt).getTime()
+      : null;
 
   // Compute time to merge
-  const timeToMergeMs = pr.mergedAt && pr.createdAt
-    ? new Date(pr.mergedAt).getTime() - new Date(pr.createdAt).getTime()
-    : null;
+  const timeToMergeMs =
+    pr.mergedAt && pr.createdAt
+      ? new Date(pr.mergedAt).getTime() - new Date(pr.createdAt).getTime()
+      : null;
 
   // Detect self-merge: author merged their own PR without any approvals
   const approvals = data.reviews.filter((r) => r.state === "APPROVED");
   const isSelfMerge =
-    pr.mergedBy !== null &&
-    pr.author.login === pr.mergedBy.login &&
-    approvals.length === 0;
+    pr.mergedBy !== null && pr.author.login === pr.mergedBy.login && approvals.length === 0;
 
   return {
     pullRequest: pr,

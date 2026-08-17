@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { scanCommand } from "../src/cli/commands/scan.command.js";
 import { configCommand } from "../src/cli/commands/config.command.js";
+import { dashboardCommand } from "../src/cli/commands/dashboard.command.js";
 import { handleError } from "../src/cli/cli-error-handler.js";
 import { logger } from "../src/utils/logger.js";
 
@@ -15,6 +16,7 @@ program
 // Register commands
 program.addCommand(scanCommand());
 program.addCommand(configCommand());
+program.addCommand(dashboardCommand());
 
 // Handle errors
 program.exitOverride();

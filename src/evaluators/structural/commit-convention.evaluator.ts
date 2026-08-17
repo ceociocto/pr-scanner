@@ -14,13 +14,15 @@ export class CommitConventionEvaluator implements Evaluator {
 
   evaluate(pr: EnrichedPullRequest, config: StandardsConfig): EvaluationResult[] {
     if (pr.commits.length === 0) {
-      return [{
-        evaluatorId: this.id,
-        name: this.name,
-        severity: "warn",
-        message: "No commits found in PR",
-        score: 1,
-      }];
+      return [
+        {
+          evaluatorId: this.id,
+          name: this.name,
+          severity: "warn",
+          message: "No commits found in PR",
+          score: 1,
+        },
+      ];
     }
 
     const pattern = config.commitConvention.pattern
@@ -48,14 +50,16 @@ export class CommitConventionEvaluator implements Evaluator {
     }
 
     if (allPass) {
-      return [{
-        evaluatorId: this.id,
-        name: this.name,
-        severity: "pass",
-        message: `All ${pr.commits.length} commits follow convention`,
-        score: 2,
-        metadata: { commitCount: pr.commits.length },
-      }];
+      return [
+        {
+          evaluatorId: this.id,
+          name: this.name,
+          severity: "pass",
+          message: `All ${pr.commits.length} commits follow convention`,
+          score: 2,
+          metadata: { commitCount: pr.commits.length },
+        },
+      ];
     }
 
     return results;

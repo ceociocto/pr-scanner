@@ -55,7 +55,9 @@ export class AiInsightReporter implements Reporter {
       }
     } else {
       sections.push("## 🔍 AI Insights\n");
-      sections.push("No AI evaluation results available. Run with `--ai` flag for AI-powered insights.\n");
+      sections.push(
+        "No AI evaluation results available. Run with `--ai` flag for AI-powered insights.\n",
+      );
     }
 
     // Best and worst PRs
@@ -67,7 +69,9 @@ export class AiInsightReporter implements Reporter {
       sections.push("## 🏆 Top Scoring PRs\n");
       for (const pr of best) {
         const score = (pr.aggregateScore * 50).toFixed(0);
-        sections.push(`- **${score}%** [#${pr.pullNumber}](${pr.url}) "${pr.pullTitle}" — by ${pr.author}`);
+        sections.push(
+          `- **${score}%** [#${pr.pullNumber}](${pr.url}) "${pr.pullTitle}" — by ${pr.author}`,
+        );
       }
       sections.push("");
     }
@@ -80,7 +84,9 @@ export class AiInsightReporter implements Reporter {
           .filter((r) => r.severity === "fail")
           .map((r) => r.name)
           .join(", ");
-        sections.push(`- **${score}%** [#${pr.pullNumber}](${pr.url}) "${pr.pullTitle}" — ${fails || "multiple warnings"}`);
+        sections.push(
+          `- **${score}%** [#${pr.pullNumber}](${pr.url}) "${pr.pullTitle}" — ${fails || "multiple warnings"}`,
+        );
       }
       sections.push("");
     }
@@ -102,9 +108,7 @@ export class AiInsightReporter implements Reporter {
     return sections.join("\n");
   }
 
-  private extractAiInsights(
-    evaluations: PullRequestEvaluation[],
-  ): Array<{
+  private extractAiInsights(evaluations: PullRequestEvaluation[]): Array<{
     evaluatorName: string;
     evaluatorId: string;
     summary: string;
@@ -113,7 +117,14 @@ export class AiInsightReporter implements Reporter {
   }> {
     const aiResults = new Map<
       string,
-      { name: string; passes: number; warns: number; fails: number; issues: string[]; suggestions: string[] }
+      {
+        name: string;
+        passes: number;
+        warns: number;
+        fails: number;
+        issues: string[];
+        suggestions: string[];
+      }
     >();
 
     for (const eval_ of evaluations) {

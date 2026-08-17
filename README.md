@@ -73,6 +73,36 @@ pr-scanner scan -c pr-scanner.config.yaml --ai
 pr-scanner report --scan-id <uuid> --format csv
 ```
 
+### 4. Open the Dashboard
+
+Build the CLI and the Dashboard static assets, then start the read-only web server:
+
+```bash
+npm run build
+pr-scanner dashboard -c pr-scanner.config.yaml --host 127.0.0.1 --port 4173
+```
+
+Open <http://127.0.0.1:4173>. The server reads the SQLite database configured by
+`cache.dbPath` (relative paths are resolved from the directory where the command is run),
+and never starts a GitHub scan or AI evaluation. For frontend-only development, use
+`npm run dashboard:dev`.
+
+Dashboard status meanings:
+
+- `completed`: every configured repository in the batch finished successfully.
+- `partial`: at least one repository finished and at least one repository failed.
+- `failed`: every repository in the batch failed.
+- `running`: the current batch is still processing; progress is updated per PR.
+- `stale`: the newest available result is older than the freshness threshold.
+- `empty`: the database has no completed scan data yet.
+
+Quality scores are shown on a 0–100 scale. The stored evaluator score is 0–2 and is
+converted with `score × 50`; PR-level pass/warn/fail counts are kept separate from
+evaluator-level rule statistics. The Dashboard intentionally omits GitHub tokens, raw
+provider JSON, AI prompts, and full PR bodies. Put it behind an internal reverse proxy or
+VPN before exposing it beyond a trusted network; authentication and authorization are
+expected to be supplied by that boundary.
+
 ## Configuration Reference
 
 ### Full example configuration

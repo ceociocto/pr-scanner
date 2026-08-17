@@ -26,9 +26,7 @@ function mapPullRequest(data: any): PullRequestData {
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     author: { login: data.user?.login ?? "unknown", id: data.user?.id ?? 0 },
-    mergedBy: data.merged_by
-      ? { login: data.merged_by.login, id: data.merged_by.id }
-      : null,
+    mergedBy: data.merged_by ? { login: data.merged_by.login, id: data.merged_by.id } : null,
     baseRef: data.base?.ref ?? "",
     headRef: data.head?.ref ?? "",
     labels: (data.labels ?? []).map((l: any) => l.name),
@@ -146,17 +144,11 @@ export class MockProvider implements GitHubProvider {
     };
   }
 
-  async getCombinedStatus(
-    _owner: string,
-    _repo: string,
-    _ref: string,
-  ): Promise<CombinedStatus> {
+  async getCombinedStatus(_owner: string, _repo: string, _ref: string): Promise<CombinedStatus> {
     return {
       state: "success",
       totalCount: 2,
-      statuses: [
-        { state: "success", description: "All checks passed", targetUrl: null },
-      ],
+      statuses: [{ state: "success", description: "All checks passed", targetUrl: null }],
     };
   }
 

@@ -38,11 +38,7 @@ export interface GitHubProvider {
   ): Promise<PaginatedResponse<CommitData>>;
 
   /** Get check runs for a ref */
-  listCheckRuns(
-    owner: string,
-    repo: string,
-    ref: string,
-  ): Promise<PaginatedResponse<CheckRunData>>;
+  listCheckRuns(owner: string, repo: string, ref: string): Promise<PaginatedResponse<CheckRunData>>;
 
   /** Get combined status for a ref */
   getCombinedStatus(owner: string, repo: string, ref: string): Promise<CombinedStatus>;

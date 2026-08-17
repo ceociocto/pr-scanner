@@ -2,10 +2,7 @@ import { AiEvaluator } from "./ai-evaluator.js";
 import type { EnrichedPullRequest } from "../../github/types.js";
 import type { PrScannerConfig } from "../../config/schema.js";
 import type { PromptContext } from "../../ai/types.js";
-import {
-  CODE_RISK_SYSTEM_PROMPT,
-  CODE_RISK_USER_PROMPT,
-} from "./prompts/code-risk.prompt.js";
+import { CODE_RISK_SYSTEM_PROMPT, CODE_RISK_USER_PROMPT } from "./prompts/code-risk.prompt.js";
 
 /**
  * AI evaluator that assesses code change risk.

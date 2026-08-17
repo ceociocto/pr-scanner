@@ -71,6 +71,8 @@ async function createModel(config: {
     }
 
     default:
-      throw new LlmError(`Unsupported AI provider: ${config.provider}. Supported: anthropic, openai, ollama.`);
+      throw new LlmError(
+        `Unsupported AI provider: ${config.provider}. Supported: anthropic, openai, ollama.`,
+      );
   }
 }

@@ -39,17 +39,32 @@ async function createTestScanResult() {
       },
       reviews: [
         {
-          id: 1, pullRequestId: 42, author: "bob", state: "APPROVED" as const,
-          body: "LGTM", submittedAt: "2025-06-15T09:00:00Z", commitId: "sha1",
+          id: 1,
+          pullRequestId: 42,
+          author: "bob",
+          state: "APPROVED" as const,
+          body: "LGTM",
+          submittedAt: "2025-06-15T09:00:00Z",
+          commitId: "sha1",
         },
       ],
       commits: [
-        { sha: "sha1", message: "fix(auth): resolve login redirect loop", author: "alice", date: "2025-06-14T08:00:00Z" },
+        {
+          sha: "sha1",
+          message: "fix(auth): resolve login redirect loop",
+          author: "alice",
+          date: "2025-06-14T08:00:00Z",
+        },
       ],
       checkRuns: [
         {
-          id: 1, name: "CI/build", status: "completed" as const, conclusion: "success" as const,
-          completedAt: "2025-06-15T09:30:00Z", startedAt: "2025-06-15T09:20:00Z", headSha: "abc123",
+          id: 1,
+          name: "CI/build",
+          status: "completed" as const,
+          conclusion: "success" as const,
+          completedAt: "2025-06-15T09:30:00Z",
+          startedAt: "2025-06-15T09:20:00Z",
+          headSha: "abc123",
         },
       ],
       firstReviewAt: "2025-06-15T08:30:00Z",

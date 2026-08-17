@@ -39,10 +39,7 @@ export abstract class AiEvaluator implements Evaluator {
     return (config.ai.evaluators as any)[key]?.enabled ?? true;
   }
 
-  async evaluate(
-    pr: EnrichedPullRequest,
-    config: PrScannerConfig,
-  ): Promise<EvaluationResult> {
+  async evaluate(pr: EnrichedPullRequest, config: PrScannerConfig): Promise<EvaluationResult> {
     if (!this.llmClient) {
       return this.skipResult("LLM client not configured");
     }
@@ -69,7 +66,9 @@ export abstract class AiEvaluator implements Evaluator {
       // Estimate prompt tokens and check budget
       const estimatedTokens = estimateTokens(system + user);
       if (this.tokenBudget && this.tokenBudget.remaining() < estimatedTokens) {
-        logger.warn(`Insufficient token budget for ${this.id}, skipping PR #${pr.pullRequest.number}`);
+        logger.warn(
+          `Insufficient token budget for ${this.id}, skipping PR #${pr.pullRequest.number}`,
+        );
         return this.skipResult("Insufficient token budget");
       }
 
@@ -110,7 +109,9 @@ export abstract class AiEvaluator implements Evaluator {
       };
     } catch (error) {
       if (error instanceof LlmError) {
-        logger.warn(`AI evaluation ${this.id} failed for PR #${pr.pullRequest.number}: ${error.message}`);
+        logger.warn(
+          `AI evaluation ${this.id} failed for PR #${pr.pullRequest.number}: ${error.message}`,
+        );
         return this.skipResult(`AI error: ${error.message}`);
       }
       throw error;
