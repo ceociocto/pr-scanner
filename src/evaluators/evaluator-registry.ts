@@ -1,7 +1,13 @@
 import type { Evaluator } from "./evaluator.js";
 import type { EnrichedPullRequest } from "../github/types.js";
 import type { PrScannerConfig } from "../config/schema.js";
-import type { EvaluationResult, PullRequestEvaluation, ScanResult, ScanSummary, EvaluatorSummary } from "../scanner/types.js";
+import type {
+  EvaluationResult,
+  PullRequestEvaluation,
+  ScanResult,
+  ScanSummary,
+  EvaluatorSummary,
+} from "../scanner/types.js";
 import { PrSizeEvaluator } from "./structural/pr-size.evaluator.js";
 import { CommitConventionEvaluator } from "./structural/commit-convention.evaluator.js";
 import { ReviewerCountEvaluator } from "./structural/reviewer-count.evaluator.js";
@@ -173,7 +179,10 @@ export function computeSummary(evaluations: PullRequestEvaluation[]): ScanSummar
   }
 
   // Per-evaluator summaries
-  const evaluatorMap = new Map<string, { name: string; pass: number; warn: number; fail: number; na: number }>();
+  const evaluatorMap = new Map<
+    string,
+    { name: string; pass: number; warn: number; fail: number; na: number }
+  >();
   for (const id of allEvaluatorIds) {
     const match = ALL_EVALUATORS.find((e) => e.id === id) ?? AI_EVALUATORS.find((e) => e.id === id);
     evaluatorMap.set(id, { name: match?.name ?? id, pass: 0, warn: 0, fail: 0, na: 0 });

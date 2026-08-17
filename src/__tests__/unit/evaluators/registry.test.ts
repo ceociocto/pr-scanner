@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { evaluatePR, computeSummary, getRegisteredEvaluators } from "../../../evaluators/evaluator-registry.js";
+import {
+  evaluatePR,
+  computeSummary,
+  getRegisteredEvaluators,
+} from "../../../evaluators/evaluator-registry.js";
 import { enrichPR } from "../../../scanner/pr-enricher.js";
 import type { EnrichedPullRequest } from "../../../github/types.js";
 import type { PrScannerConfig } from "../../../config/schema.js";

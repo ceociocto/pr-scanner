@@ -3,7 +3,11 @@ import { loadConfig } from "../../config/loader.js";
 import { createRepoProvider } from "../../github/provider-factory.js";
 import { fetchPRData } from "../../scanner/pr-fetcher.js";
 import { enrichPR } from "../../scanner/pr-enricher.js";
-import { evaluatePR, buildScanResult, initAiEvaluators } from "../../evaluators/evaluator-registry.js";
+import {
+  evaluatePR,
+  buildScanResult,
+  initAiEvaluators,
+} from "../../evaluators/evaluator-registry.js";
 import type { AiEvaluator } from "../../evaluators/ai/ai-evaluator.js";
 import { logger } from "../../utils/logger.js";
 import { formatDuration } from "../../utils/time.js";
@@ -72,7 +76,9 @@ export function scanCommand(): Command {
             config.ai.warnAtTokensPercent,
           );
           aiEvaluators = initAiEvaluators(config, llmClient, tokenBudget);
-          logger.info(`AI enabled: ${config.ai.provider}/${config.ai.model} with ${aiEvaluators.length} evaluators`);
+          logger.info(
+            `AI enabled: ${config.ai.provider}/${config.ai.model} with ${aiEvaluators.length} evaluators`,
+          );
         } catch (error) {
           logger.warn(`Failed to initialize AI: ${(error as Error).message}`);
           logger.warn("Continuing with rule-based evaluation only");
@@ -130,10 +136,7 @@ export function scanCommand(): Command {
           const mergedPRs = response.data.filter((pr) => pr.merged);
           totalMerged += mergedPRs.length;
 
-          const prsToScan = mergedPRs.slice(
-            0,
-            config.scan.maxPullRequests || mergedPRs.length,
-          );
+          const prsToScan = mergedPRs.slice(0, config.scan.maxPullRequests || mergedPRs.length);
 
           logger.info(`Found ${prsToScan.length} merged PR${prsToScan.length !== 1 ? "s" : ""}`);
 
@@ -183,16 +186,18 @@ export function scanCommand(): Command {
 
             // Log progress for console output
             if (config.output.format === "console" && config.output.detailLevel !== "summary") {
-              const emoji = evaluation.failCount > 0 ? "❌" : evaluation.warnCount > 0 ? "⚠️" : "✅";
+              const emoji =
+                evaluation.failCount > 0 ? "❌" : evaluation.warnCount > 0 ? "⚠️" : "✅";
               const score = (evaluation.aggregateScore * 50).toFixed(0);
               logger.output(`${progress} ${emoji} #${pr.number} ${pr.title} — score: ${score}%\n`);
             }
           }
 
           // Update scan run
-          const avgScore = allEvaluations.length > 0
-            ? allEvaluations.reduce((s, e) => s + e.aggregateScore, 0) / allEvaluations.length
-            : 0;
+          const avgScore =
+            allEvaluations.length > 0
+              ? allEvaluations.reduce((s, e) => s + e.aggregateScore, 0) / allEvaluations.length
+              : 0;
           scanResultRepo.update(scanId, prsToScan.length, prsToScan.length, avgScore);
           repoRepo.updateLastScanned(repoId);
 

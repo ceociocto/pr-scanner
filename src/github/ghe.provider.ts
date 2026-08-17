@@ -45,15 +45,12 @@ export class GheProvider implements GitHubProvider {
     };
   }
 
-  async getPullRequest(
-    owner: string,
-    repo: string,
-    pullNumber: number,
-  ): Promise<PullRequestData> {
-    const response = await this.octokit.request(
-      "GET /repos/{owner}/{repo}/pulls/{pull_number}",
-      { owner, repo, pull_number: pullNumber },
-    );
+  async getPullRequest(owner: string, repo: string, pullNumber: number): Promise<PullRequestData> {
+    const response = await this.octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
+      owner,
+      repo,
+      pull_number: pullNumber,
+    });
     return mapPullRequest(response.data);
   }
 
@@ -105,15 +102,12 @@ export class GheProvider implements GitHubProvider {
     };
   }
 
-  async getCombinedStatus(
-    owner: string,
-    repo: string,
-    ref: string,
-  ): Promise<CombinedStatus> {
-    const response = await this.octokit.request(
-      "GET /repos/{owner}/{repo}/commits/{ref}/status",
-      { owner, repo, ref },
-    );
+  async getCombinedStatus(owner: string, repo: string, ref: string): Promise<CombinedStatus> {
+    const response = await this.octokit.request("GET /repos/{owner}/{repo}/commits/{ref}/status", {
+      owner,
+      repo,
+      ref,
+    });
     return response.data as CombinedStatus;
   }
 
@@ -145,9 +139,7 @@ function mapPullRequest(data: any): PullRequestData {
       login: data.user?.login ?? "unknown",
       id: data.user?.id ?? 0,
     },
-    mergedBy: data.merged_by
-      ? { login: data.merged_by.login, id: data.merged_by.id }
-      : null,
+    mergedBy: data.merged_by ? { login: data.merged_by.login, id: data.merged_by.id } : null,
     baseRef: data.base?.ref ?? "",
     headRef: data.head?.ref ?? "",
     labels: (data.labels ?? []).map((l: any) => l.name),
@@ -163,9 +155,7 @@ function mapPullRequest(data: any): PullRequestData {
 function mapReview(data: any): ReviewData {
   return {
     id: data.id,
-    pullRequestId: data.pull_request_url
-      ? parseInt(data.pull_request_url.split("/").pop()!)
-      : 0,
+    pullRequestId: data.pull_request_url ? parseInt(data.pull_request_url.split("/").pop()!) : 0,
     author: data.user?.login ?? "unknown",
     state: data.state,
     body: data.body ?? "",

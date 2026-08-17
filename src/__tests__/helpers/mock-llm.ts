@@ -83,10 +83,12 @@ export class MockLlmClient implements LlmClient {
     }
 
     // Default response
-    return this.config.defaultResponse ?? {
-      severity: "pass",
-      message: "Mock evaluation: looks good",
-    };
+    return (
+      this.config.defaultResponse ?? {
+        severity: "pass",
+        message: "Mock evaluation: looks good",
+      }
+    );
   }
 }
 

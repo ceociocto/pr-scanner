@@ -42,17 +42,7 @@ export const standardsSchema = z.object({
       pattern: z.string().optional(),
       allowedTypes: z
         .array(z.string())
-        .default([
-          "feat",
-          "fix",
-          "refactor",
-          "docs",
-          "test",
-          "chore",
-          "perf",
-          "build",
-          "ci",
-        ]),
+        .default(["feat", "fix", "refactor", "docs", "test", "chore", "perf", "build", "ci"]),
     })
     .default({}),
   reviewerCount: z

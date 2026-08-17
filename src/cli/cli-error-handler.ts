@@ -45,10 +45,7 @@ const SUGGESTIONS: Record<string, string[]> = {
     "Check your network connection to the AI provider.",
     "Run with --no-ai to skip AI evaluation.",
   ],
-  E7002: [
-    "Increase maxTokensPerScan in your config.",
-    "Run with --no-ai to skip AI evaluation.",
-  ],
+  E7002: ["Increase maxTokensPerScan in your config.", "Run with --no-ai to skip AI evaluation."],
 };
 
 function getSuggestions(code: string): string[] {

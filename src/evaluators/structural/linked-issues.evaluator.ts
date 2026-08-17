@@ -28,7 +28,10 @@ export class LinkedIssuesEvaluator implements Evaluator {
         severity: "pass",
         message: `References issue(s): ${matches.join(", ")}`,
         score: 2,
-        metadata: { issues: matches, source: { inBody: bodyMatches?.length ?? 0, inTitle: titleMatches?.length ?? 0 } },
+        metadata: {
+          issues: matches,
+          source: { inBody: bodyMatches?.length ?? 0, inTitle: titleMatches?.length ?? 0 },
+        },
       };
     }
 

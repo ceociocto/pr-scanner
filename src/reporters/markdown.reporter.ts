@@ -18,21 +18,11 @@ export class MarkdownReporter implements Reporter {
     lines.push("## Summary\n");
     lines.push("| Metric | Value |");
     lines.push("|--------|-------|");
-    lines.push(
-      `| Total PRs | ${result.totalPullRequests} |`,
-    );
-    lines.push(
-      `| Average Score | ${(result.summary.averageScore * 50).toFixed(1)}% |`,
-    );
-    lines.push(
-      `| ✅ All Pass | ${result.summary.allPassCount} |`,
-    );
-    lines.push(
-      `| ⚠️  Warnings | ${result.summary.warningCount} |`,
-    );
-    lines.push(
-      `| ❌ Failures | ${result.summary.failureCount} |\n`,
-    );
+    lines.push(`| Total PRs | ${result.totalPullRequests} |`);
+    lines.push(`| Average Score | ${(result.summary.averageScore * 50).toFixed(1)}% |`);
+    lines.push(`| ✅ All Pass | ${result.summary.allPassCount} |`);
+    lines.push(`| ⚠️  Warnings | ${result.summary.warningCount} |`);
+    lines.push(`| ❌ Failures | ${result.summary.failureCount} |\n`);
 
     // Evaluator breakdown
     lines.push("## Evaluator Breakdown\n");
@@ -51,8 +41,7 @@ export class MarkdownReporter implements Reporter {
     lines.push("## Pull Request Details\n");
 
     for (const eval_ of result.evaluations) {
-      const emoji =
-        eval_.failCount > 0 ? "❌" : eval_.warnCount > 0 ? "⚠️" : "✅";
+      const emoji = eval_.failCount > 0 ? "❌" : eval_.warnCount > 0 ? "⚠️" : "✅";
       const score = (eval_.aggregateScore * 50).toFixed(0);
       lines.push(
         `### ${emoji} [${eval_.repository}#${eval_.pullNumber}](${eval_.url}) — ${score}%\n`,
@@ -62,8 +51,7 @@ export class MarkdownReporter implements Reporter {
       lines.push("|-------|--------|");
 
       for (const r of eval_.results) {
-        const severityIcon =
-          r.severity === "pass" ? "✅" : r.severity === "warn" ? "⚠️" : "❌";
+        const severityIcon = r.severity === "pass" ? "✅" : r.severity === "warn" ? "⚠️" : "❌";
         lines.push(`| ${r.name} | ${severityIcon} ${r.message} |`);
       }
 

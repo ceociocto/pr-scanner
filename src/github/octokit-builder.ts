@@ -23,7 +23,9 @@ export function buildOctokit(config: PrScannerConfig): AppOctokit {
         return retryCount < 2;
       },
       onSecondaryRateLimit: (retryAfter, options) => {
-        logger.warn(`Secondary rate limit for ${options.method} ${options.url}. Waiting ${retryAfter}s`);
+        logger.warn(
+          `Secondary rate limit for ${options.method} ${options.url}. Waiting ${retryAfter}s`,
+        );
       },
     },
   };

@@ -27,5 +27,8 @@ export interface Evaluator {
   /** Whether this evaluator is enabled in the current config */
   isEnabled(config: StandardsConfig): boolean;
   /** Evaluate a single PR (sync for rules, async for AI) */
-  evaluate(pr: EnrichedPullRequest, config: StandardsConfig): EvaluationResult | EvaluationResult[] | Promise<EvaluationResult | EvaluationResult[]>;
+  evaluate(
+    pr: EnrichedPullRequest,
+    config: StandardsConfig,
+  ): EvaluationResult | EvaluationResult[] | Promise<EvaluationResult | EvaluationResult[]>;
 }

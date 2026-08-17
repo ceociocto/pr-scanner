@@ -21,7 +21,11 @@ export class CodeChurnEvaluator implements Evaluator {
         severity: "pass",
         message: `${files} files changed (within ${config.codeChurn.maxFilesWarning} threshold)`,
         score: 2,
-        metadata: { files, additions: pr.pullRequest.additions, deletions: pr.pullRequest.deletions },
+        metadata: {
+          files,
+          additions: pr.pullRequest.additions,
+          deletions: pr.pullRequest.deletions,
+        },
       };
     }
 

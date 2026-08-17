@@ -41,14 +41,16 @@ export class ReviewCommentCountEvaluator implements Evaluator {
 
     // If no warnings, it passes
     if (results.length === 0) {
-      return [{
-        evaluatorId: this.id,
-        name: this.name,
-        severity: "pass",
-        message: `${comments} review comments (within normal range)`,
-        score: 2,
-        metadata: { commentCount: comments },
-      }];
+      return [
+        {
+          evaluatorId: this.id,
+          name: this.name,
+          severity: "pass",
+          message: `${comments} review comments (within normal range)`,
+          score: 2,
+          metadata: { commentCount: comments },
+        },
+      ];
     }
 
     return results;

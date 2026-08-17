@@ -21,7 +21,11 @@ export class PrSizeEvaluator implements Evaluator {
         severity: "pass",
         message: `${lines} lines changed (within ideal threshold of ${config.prSize.ideal})`,
         score: 2,
-        metadata: { lines, additions: pr.pullRequest.additions, deletions: pr.pullRequest.deletions },
+        metadata: {
+          lines,
+          additions: pr.pullRequest.additions,
+          deletions: pr.pullRequest.deletions,
+        },
       };
     }
 
@@ -32,7 +36,11 @@ export class PrSizeEvaluator implements Evaluator {
         severity: "warn",
         message: `${lines} lines changed (above ideal ${config.prSize.ideal}, within warning ${config.prSize.warning})`,
         score: 1,
-        metadata: { lines, additions: pr.pullRequest.additions, deletions: pr.pullRequest.deletions },
+        metadata: {
+          lines,
+          additions: pr.pullRequest.additions,
+          deletions: pr.pullRequest.deletions,
+        },
       };
     }
 

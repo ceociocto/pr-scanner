@@ -31,7 +31,10 @@ export class ConfigValidationError extends ConfigError {
 
 /** GitHub provider error */
 export class ProviderError extends PrScannerError {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message, "E5001", 2);
     this.name = "ProviderError";
   }
@@ -57,7 +60,10 @@ export class RateLimitError extends ProviderError {
 
 /** Database error */
 export class DatabaseError extends PrScannerError {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message, "E6001", 3);
     this.name = "DatabaseError";
   }
@@ -65,7 +71,10 @@ export class DatabaseError extends PrScannerError {
 
 /** LLM/AI error */
 export class LlmError extends PrScannerError {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message, "E7001", 4);
     this.name = "LlmError";
   }
