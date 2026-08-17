@@ -3,6 +3,10 @@ dist/
 *.db
 *.db-journal
 data/
+!src/data/
+!src/data/**
+!src/__tests__/unit/data/
+!src/__tests__/unit/data/**
 reports/
 .env
 .env.local

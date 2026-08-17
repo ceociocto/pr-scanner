@@ -24,6 +24,7 @@ import pc from "picocolors";
 import { randomUUID } from "node:crypto";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import type { ScanPhase } from "../../data/db/schema.js";
 
 export function scanCommand(): Command {
   const cmd = new Command("scan");
@@ -96,10 +97,11 @@ export function scanCommand(): Command {
       const evalRepo = new EvaluationRepository(config);
       const scanResultRepo = new ScanResultRepository(config);
       const ttlMs = config.cache.ttlHours * 3_600_000;
+      const batchId = randomUUID();
+      scanResultRepo.createBatch(batchId, config.repositories.length, "");
 
       // Scan each repository
       const allEvaluations: Array<ReturnType<typeof evaluatePR>> = [];
-      let totalMerged = 0;
       let totalFetched = 0;
       let totalCached = 0;
 
@@ -107,41 +109,34 @@ export function scanCommand(): Command {
         const [owner, repo] = repoConfig.name.split("/");
         const repoId = repoRepo.upsert(repoConfig.name, config.github.platform);
         const scanId = randomUUID();
+        const repoEvaluations: Array<Awaited<ReturnType<typeof evaluatePR>>> = [];
+        let currentPhase: ScanPhase = "connecting";
+        scanResultRepo.create(scanId, repoId, "", batchId);
 
         // Create per-repo provider (respects platform/token overrides)
         const provider = createRepoProvider(config, repoConfig);
 
-        logger.info(`Connecting to ${provider.platform} for ${repoConfig.name}...`);
         try {
+          logger.info(`Connecting to ${provider.platform} for ${repoConfig.name}...`);
           const conn = await provider.testConnection();
-          if (conn.ok) {
-            logger.success(`Authenticated as ${conn.username}`);
-          } else {
-            logger.error("Authentication failed. Check your token.");
-            process.exit(2);
+          if (!conn.ok) {
+            throw new Error("Authentication failed. Check your token.");
           }
-        } catch (error) {
-          logger.error(`Connection failed: ${(error as Error).message}`);
-          process.exit(2);
-        }
+          logger.success(`Authenticated as ${conn.username}`);
 
-        logger.info(pc.bold(`\n📊 Scanning ${repoConfig.name}...`));
+          logger.info(pc.bold(`\n📊 Scanning ${repoConfig.name}...`));
 
-        try {
           // List merged PRs
+          currentPhase = "fetching";
           const response = await provider.listPullRequests(owner, repo, {
             state: config.scan.includeUnmerged ? "all" : "closed",
           });
 
           const mergedPRs = response.data.filter((pr) => pr.merged);
-          totalMerged += mergedPRs.length;
-
           const prsToScan = mergedPRs.slice(0, config.scan.maxPullRequests || mergedPRs.length);
+          scanResultRepo.updateProgress(scanId, prsToScan.length, 0, currentPhase);
 
           logger.info(`Found ${prsToScan.length} merged PR${prsToScan.length !== 1 ? "s" : ""}`);
-
-          // Create scan run record
-          scanResultRepo.create(scanId, repoId, "");
 
           // Fetch, cache, enrich, and evaluate each PR
           for (let i = 0; i < prsToScan.length; i++) {
@@ -173,8 +168,10 @@ export function scanCommand(): Command {
             );
 
             // Evaluate
+            currentPhase = "evaluating";
             const evaluation = await evaluatePR(enriched, config, aiEvaluators);
             allEvaluations.push(evaluation);
+            repoEvaluations.push(evaluation);
 
             // Store evaluation results
             const prRecord = prRepo.findByNumber(repoId, pr.number);
@@ -191,21 +188,27 @@ export function scanCommand(): Command {
               const score = (evaluation.aggregateScore * 50).toFixed(0);
               logger.output(`${progress} ${emoji} #${pr.number} ${pr.title} — score: ${score}%\n`);
             }
+
+            scanResultRepo.updateProgress(scanId, prsToScan.length, i + 1, currentPhase);
           }
 
           // Update scan run
           const avgScore =
-            allEvaluations.length > 0
-              ? allEvaluations.reduce((s, e) => s + e.aggregateScore, 0) / allEvaluations.length
+            repoEvaluations.length > 0
+              ? repoEvaluations.reduce((s, e) => s + e.aggregateScore, 0) / repoEvaluations.length
               : 0;
           scanResultRepo.update(scanId, prsToScan.length, prsToScan.length, avgScore);
           repoRepo.updateLastScanned(repoId);
 
           logger.success(`${repoConfig.name}: ${prsToScan.length} PRs evaluated`);
         } catch (error) {
-          logger.error(`Failed to scan ${repoConfig.name}: ${(error as Error).message}`);
+          const message = error instanceof Error ? error.message : String(error);
+          scanResultRepo.fail(scanId, message, currentPhase);
+          logger.error(`Failed to scan ${repoConfig.name}: ${message}`);
         }
       }
+
+      scanResultRepo.finalizeBatch(batchId);
 
       // Build and output summary
       const scanResult = buildScanResult(
