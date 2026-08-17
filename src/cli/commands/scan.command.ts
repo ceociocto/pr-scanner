@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../../config/loader.js";
-import { createProvider } from "../../github/provider-factory.js";
+import { createProvider, createRepoProvider } from "../../github/provider-factory.js";
 import { fetchPRData } from "../../scanner/pr-fetcher.js";
 import { enrichPR } from "../../scanner/pr-enricher.js";
 import { evaluatePR, buildScanResult } from "../../evaluators/evaluator-registry.js";
@@ -59,23 +59,6 @@ export function scanCommand(): Command {
       logger.debug("Initializing database...");
       runMigrations(config);
 
-      // Create provider and test connection
-      const provider = createProvider(config);
-      logger.info(`Connecting to ${provider.platform}...`);
-
-      try {
-        const conn = await provider.testConnection();
-        if (conn.ok) {
-          logger.success(`Authenticated as ${conn.username}`);
-        } else {
-          logger.error("Authentication failed. Check your token.");
-          process.exit(2);
-        }
-      } catch (error) {
-        logger.error(`Connection failed: ${(error as Error).message}`);
-        process.exit(2);
-      }
-
       // Create data repositories
       const repoRepo = new RepositoryRepository(config);
       const prRepo = new PullRequestRepository(config);
@@ -93,6 +76,23 @@ export function scanCommand(): Command {
         const [owner, repo] = repoConfig.name.split("/");
         const repoId = repoRepo.upsert(repoConfig.name, config.github.platform);
         const scanId = randomUUID();
+
+        // Create per-repo provider (respects platform/token overrides)
+        const provider = createRepoProvider(config, repoConfig);
+
+        logger.info(`Connecting to ${provider.platform} for ${repoConfig.name}...`);
+        try {
+          const conn = await provider.testConnection();
+          if (conn.ok) {
+            logger.success(`Authenticated as ${conn.username}`);
+          } else {
+            logger.error("Authentication failed. Check your token.");
+            process.exit(2);
+          }
+        } catch (error) {
+          logger.error(`Connection failed: ${(error as Error).message}`);
+          process.exit(2);
+        }
 
         logger.info(bold(`\n📊 Scanning ${repoConfig.name}...`));
 
