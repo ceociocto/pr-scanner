@@ -1,6 +1,6 @@
 import type { Evaluator } from "./evaluator.js";
 import type { EnrichedPullRequest } from "../github/types.js";
-import type { StandardsConfig, PrScannerConfig } from "../config/schema.js";
+import type { PrScannerConfig } from "../config/schema.js";
 import type { EvaluationResult, PullRequestEvaluation, ScanResult, ScanSummary, EvaluatorSummary } from "../scanner/types.js";
 import { PrSizeEvaluator } from "./structural/pr-size.evaluator.js";
 import { CommitConventionEvaluator } from "./structural/commit-convention.evaluator.js";
@@ -15,9 +15,15 @@ import { CodeChurnEvaluator } from "./semi-automated/code-churn.evaluator.js";
 import { SelfMergeEvaluator } from "./semi-automated/self-merge.evaluator.js";
 import { RevertRateEvaluator } from "./semi-automated/revert-rate.evaluator.js";
 import { ReviewCommentCountEvaluator } from "./semi-automated/review-comment-count.evaluator.js";
+import { DescriptionQualityAiEvaluator } from "./ai/description-quality-ai.evaluator.js";
+import { CodeRiskAiEvaluator } from "./ai/code-risk-ai.evaluator.js";
+import { ReviewQualityAiEvaluator } from "./ai/review-quality-ai.evaluator.js";
+import type { AiEvaluator } from "./ai/ai-evaluator.js";
+import type { LlmClient } from "../ai/llm-client.js";
+import type { TokenBudget } from "../ai/types.js";
 
-/** All registered evaluators */
-const ALL_EVALUATORS: Evaluator[] = [
+/** All registered rule-based evaluators */
+const RULE_EVALUATORS: Evaluator[] = [
   new PrSizeEvaluator(),
   new CommitConventionEvaluator(),
   new ReviewerCountEvaluator(),
@@ -33,29 +39,82 @@ const ALL_EVALUATORS: Evaluator[] = [
   new ReviewCommentCountEvaluator(),
 ];
 
+/** All registered AI evaluators */
+const AI_EVALUATORS: AiEvaluator[] = [
+  new DescriptionQualityAiEvaluator(),
+  new CodeRiskAiEvaluator(),
+  new ReviewQualityAiEvaluator(),
+];
+
+/** All registered evaluators (rules only, AI added at runtime) */
+const ALL_EVALUATORS: Evaluator[] = [...RULE_EVALUATORS];
+
 /**
- * Get all registered evaluators.
+ * Get all registered rule-based evaluators.
  */
 export function getRegisteredEvaluators(): Evaluator[] {
   return ALL_EVALUATORS;
 }
 
 /**
- * Run all enabled evaluators against a single PR.
+ * Initialize AI evaluators with LLM client and token budget.
+ * Returns the list of AI evaluators that are ready to use.
  */
-export function evaluatePR(
+export function initAiEvaluators(
+  config: PrScannerConfig,
+  llmClient: LlmClient | null,
+  tokenBudget: TokenBudget | null,
+): AiEvaluator[] {
+  if (!config.ai.enabled || !llmClient) {
+    return [];
+  }
+
+  for (const evaluator of AI_EVALUATORS) {
+    evaluator.setLlmClient(llmClient);
+    evaluator.setTokenBudget(tokenBudget);
+  }
+
+  return AI_EVALUATORS;
+}
+
+/**
+ * Run all enabled evaluators (rules + AI) against a single PR.
+ */
+export async function evaluatePR(
   pr: EnrichedPullRequest,
   config: PrScannerConfig,
-): PullRequestEvaluation {
-  const standards = config.standards;
+  aiEvaluators: AiEvaluator[] = [],
+): Promise<PullRequestEvaluation> {
   const allResults: EvaluationResult[] = [];
 
-  for (const evaluator of ALL_EVALUATORS) {
-    if (!evaluator.isEnabled(standards)) {
+  // Run rule evaluators (sync)
+  for (const evaluator of RULE_EVALUATORS) {
+    if (!evaluator.isEnabled(config.standards)) {
       continue;
     }
 
-    const results = evaluator.evaluate(pr, standards);
+    const results = evaluator.evaluate(pr, config.standards);
+    const normalized = Array.isArray(results) ? results : [results];
+    allResults.push(...normalized);
+  }
+
+  // Run AI evaluators (async) and build rule result map for context
+  const ruleResultMap: Record<string, string> = {};
+  for (const result of allResults) {
+    ruleResultMap[result.evaluatorId] = `${result.severity}: ${result.message}`;
+  }
+
+  for (const evaluator of aiEvaluators) {
+    if (!evaluator.isEnabled(config)) {
+      continue;
+    }
+
+    // Inject rule results as context for AI evaluators
+    if (evaluator instanceof CodeRiskAiEvaluator) {
+      evaluator.getRuleEvalResults = () => ruleResultMap;
+    }
+
+    const results = await evaluator.evaluate(pr, config);
     const normalized = Array.isArray(results) ? results : [results];
     allResults.push(...normalized);
   }
@@ -105,12 +164,22 @@ export function computeSummary(evaluations: PullRequestEvaluation[]): ScanSummar
   const warningCount = evaluations.filter((e) => e.warnCount > 0 && e.failCount === 0).length;
   const failureCount = evaluations.filter((e) => e.failCount > 0).length;
 
-  // Per-evaluator summaries
-  const evaluatorMap = new Map<string, { pass: number; warn: number; fail: number; na: number }>();
-  for (const evaluator of ALL_EVALUATORS) {
-    evaluatorMap.set(evaluator.id, { pass: 0, warn: 0, fail: 0, na: 0 });
+  // Collect all evaluator IDs from results across all PRs
+  const allEvaluatorIds = new Set<string>();
+  for (const eval_ of evaluations) {
+    for (const result of eval_.results) {
+      allEvaluatorIds.add(result.evaluatorId);
+    }
   }
 
+  // Per-evaluator summaries
+  const evaluatorMap = new Map<string, { name: string; pass: number; warn: number; fail: number; na: number }>();
+  for (const id of allEvaluatorIds) {
+    const match = ALL_EVALUATORS.find((e) => e.id === id) ?? AI_EVALUATORS.find((e) => e.id === id);
+    evaluatorMap.set(id, { name: match?.name ?? id, pass: 0, warn: 0, fail: 0, na: 0 });
+  }
+
+  const total = evaluations.length;
   for (const eval_ of evaluations) {
     for (const result of eval_.results) {
       const stats = evaluatorMap.get(result.evaluatorId);
@@ -128,18 +197,16 @@ export function computeSummary(evaluations: PullRequestEvaluation[]): ScanSummar
     }
   }
 
-  const total = evaluations.length;
-  const evaluatorSummaries: EvaluatorSummary[] = ALL_EVALUATORS.map((e) => {
-    const stats = evaluatorMap.get(e.id)!;
-    return {
-      evaluatorId: e.id,
-      name: e.name,
+  const evaluatorSummaries: EvaluatorSummary[] = Array.from(evaluatorMap.entries()).map(
+    ([id, stats]) => ({
+      evaluatorId: id,
+      name: stats.name,
       passRate: total > 0 ? (stats.pass / total) * 100 : 0,
       warnRate: total > 0 ? (stats.warn / total) * 100 : 0,
       failRate: total > 0 ? (stats.fail / total) * 100 : 0,
       notApplicableCount: stats.na,
-    };
-  });
+    }),
+  );
 
   return {
     averageScore: Math.round(averageScore * 100) / 100,

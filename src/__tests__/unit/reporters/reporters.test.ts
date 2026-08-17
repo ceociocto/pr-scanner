@@ -10,7 +10,7 @@ import { enrichPR } from "../../../scanner/pr-enricher.js";
 import type { PrScannerConfig } from "../../../config/schema.js";
 import { DEFAULT_CONFIG } from "../../../config/defaults.js";
 
-function createTestScanResult() {
+async function createTestScanResult() {
   const config = { ...DEFAULT_CONFIG } as PrScannerConfig;
   const enriched = enrichPR(
     {
@@ -61,14 +61,13 @@ function createTestScanResult() {
     "owner/repo",
   );
 
-  const evaluations = [evaluatePR(enriched, config)];
+  const evaluations = [await evaluatePR(enriched, config)];
   return buildScanResult(["owner/repo"], evaluations);
 }
 
 describe("Reporters", () => {
-  const result = createTestScanResult();
-
-  it("JSON reporter produces valid JSON", () => {
+  it("JSON reporter produces valid JSON", async () => {
+    const result = await createTestScanResult();
     const reporter = new JsonReporter();
     const output = reporter.render(result);
     const parsed = JSON.parse(output);
@@ -77,7 +76,8 @@ describe("Reporters", () => {
     expect(parsed.summary).toBeDefined();
   });
 
-  it("CSV reporter has headers", () => {
+  it("CSV reporter has headers", async () => {
+    const result = await createTestScanResult();
     const reporter = new CsvReporter();
     const output = reporter.render(result);
     // CSV has two sections: summary then PR rows, each with its own header
@@ -92,7 +92,8 @@ describe("Reporters", () => {
     expect(output).toContain("#42");
   });
 
-  it("Markdown reporter has sections", () => {
+  it("Markdown reporter has sections", async () => {
+    const result = await createTestScanResult();
     const reporter = new MarkdownReporter();
     const output = reporter.render(result);
     expect(output).toContain("# PR Quality Scan Report");
@@ -102,7 +103,8 @@ describe("Reporters", () => {
     expect(output).toContain("|");
   });
 
-  it("Console reporter outputs text", () => {
+  it("Console reporter outputs text", async () => {
+    const result = await createTestScanResult();
     const reporter = new ConsoleReporter();
     const output = reporter.render(result);
     expect(output).toContain("PR Quality Scan Report");
@@ -110,7 +112,8 @@ describe("Reporters", () => {
     expect(output).toContain("#42");
   });
 
-  it("Console reporter can disable colors", () => {
+  it("Console reporter can disable colors", async () => {
+    const result = await createTestScanResult();
     const reporter = new ConsoleReporter();
     reporter.disableColor();
     const output = reporter.render(result);
@@ -119,10 +122,13 @@ describe("Reporters", () => {
     expect(output).not.toContain("\x1b[");
   });
 
-  it("AI Insight reporter returns placeholder", () => {
+  it("AI Insight reporter produces insight sections", async () => {
+    const result = await createTestScanResult();
     const reporter = new AiInsightReporter();
     const output = reporter.render(result);
-    expect(output).toContain("AI Insight reports require AI to be enabled");
+    expect(output).toContain("AI Insight Report");
+    expect(output).toContain("Overall Summary");
+    expect(output).toContain("AI Insights");
   });
 
   it("Reporter factory creates correct types", () => {

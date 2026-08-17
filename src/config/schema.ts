@@ -125,7 +125,7 @@ export const standardsSchema = z.object({
 
 /** Output configuration */
 export const outputSchema = z.object({
-  format: z.enum(["json", "csv", "markdown", "console"]).default("console"),
+  format: z.enum(["json", "csv", "markdown", "console", "ai-insight"]).default("console"),
   filePath: z.string().optional(),
   detailLevel: z.enum(["summary", "detailed", "full"]).default("detailed"),
 });

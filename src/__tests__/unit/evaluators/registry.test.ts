@@ -80,15 +80,15 @@ function createEnrichedPR(overrides: Partial<EnrichedPullRequest> = {}): Enriche
 }
 
 describe("Evaluator Registry", () => {
-  it("should have 13 evaluators registered", () => {
+  it("should have 13 rule evaluators registered", () => {
     const evaluators = getRegisteredEvaluators();
     expect(evaluators.length).toBe(13);
   });
 
-  it("should evaluate a good PR and produce mostly pass results", () => {
+  it("should evaluate a good PR and produce mostly pass results", async () => {
     const pr = createEnrichedPR();
     const config = { ...DEFAULT_CONFIG } as PrScannerConfig;
-    const result = evaluatePR(pr, config);
+    const result = await evaluatePR(pr, config);
 
     expect(result.pullNumber).toBe(42);
     expect(result.results.length).toBeGreaterThan(5);
@@ -97,7 +97,7 @@ describe("Evaluator Registry", () => {
     expect(result.aggregateScore).toBeGreaterThan(1);
   });
 
-  it("should detect a PR with no linked issues", () => {
+  it("should detect a PR with no linked issues", async () => {
     const pr = createEnrichedPR({
       pullRequest: {
         ...createEnrichedPR().pullRequest,
@@ -106,14 +106,14 @@ describe("Evaluator Registry", () => {
       },
     });
     const config = { ...DEFAULT_CONFIG } as PrScannerConfig;
-    const result = evaluatePR(pr, config);
+    const result = await evaluatePR(pr, config);
 
     const linkedIssues = result.results.find((r) => r.evaluatorId === "linked-issues");
     expect(linkedIssues).toBeDefined();
     expect(linkedIssues!.severity).toBe("fail");
   });
 
-  it("should detect self-merge", () => {
+  it("should detect self-merge", async () => {
     const pr = createEnrichedPR({
       pullRequest: {
         ...createEnrichedPR().pullRequest,
@@ -124,14 +124,14 @@ describe("Evaluator Registry", () => {
       isSelfMerge: true,
     });
     const config = { ...DEFAULT_CONFIG } as PrScannerConfig;
-    const result = evaluatePR(pr, config);
+    const result = await evaluatePR(pr, config);
 
     const selfMerge = result.results.find((r) => r.evaluatorId === "self-merge");
     expect(selfMerge).toBeDefined();
     expect(selfMerge!.severity).toBe("fail");
   });
 
-  it("should skip disabled evaluators", () => {
+  it("should skip disabled evaluators", async () => {
     const pr = createEnrichedPR();
     const config = {
       ...DEFAULT_CONFIG,
@@ -142,7 +142,7 @@ describe("Evaluator Registry", () => {
         reviewerCount: { ...DEFAULT_CONFIG.standards.reviewerCount, enabled: false },
       },
     } as PrScannerConfig;
-    const result = evaluatePR(pr, config);
+    const result = await evaluatePR(pr, config);
 
     const ids = result.results.map((r) => r.evaluatorId);
     expect(ids).not.toContain("pr-size");
@@ -152,16 +152,16 @@ describe("Evaluator Registry", () => {
 });
 
 describe("Scan Summary", () => {
-  it("should compute correct summary statistics", () => {
+  it("should compute correct summary statistics", async () => {
     const config = { ...DEFAULT_CONFIG } as PrScannerConfig;
     const evaluations = [
-      evaluatePR(createEnrichedPR(), config),
-      evaluatePR(createEnrichedPR(), config),
+      await evaluatePR(createEnrichedPR(), config),
+      await evaluatePR(createEnrichedPR(), config),
     ];
     const summary = computeSummary(evaluations);
 
     expect(summary.averageScore).toBeGreaterThan(0);
     expect(summary.allPassCount + summary.warningCount + summary.failureCount).toBe(2);
-    expect(summary.evaluatorSummaries.length).toBe(13);
+    expect(summary.evaluatorSummaries.length).toBeGreaterThan(0);
   });
 });

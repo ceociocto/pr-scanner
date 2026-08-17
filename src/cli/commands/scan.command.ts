@@ -1,9 +1,10 @@
 import { Command } from "commander";
 import { loadConfig } from "../../config/loader.js";
-import { createProvider, createRepoProvider } from "../../github/provider-factory.js";
+import { createRepoProvider } from "../../github/provider-factory.js";
 import { fetchPRData } from "../../scanner/pr-fetcher.js";
 import { enrichPR } from "../../scanner/pr-enricher.js";
-import { evaluatePR, buildScanResult } from "../../evaluators/evaluator-registry.js";
+import { evaluatePR, buildScanResult, initAiEvaluators } from "../../evaluators/evaluator-registry.js";
+import type { AiEvaluator } from "../../evaluators/ai/ai-evaluator.js";
 import { logger } from "../../utils/logger.js";
 import { formatDuration } from "../../utils/time.js";
 import { runMigrations } from "../../data/db/migrate.js";
@@ -13,6 +14,8 @@ import { EvaluationRepository } from "../../data/repositories/evaluation.reposit
 import { ScanResultRepository } from "../../data/repositories/scan-result.repository.js";
 import { closeDb } from "../../data/db/connection.js";
 import { createReporter } from "../../reporters/reporter-factory.js";
+import { createLlmFromConfig } from "../../ai/llm-factory.js";
+import { createTokenBudget } from "../../ai/token-counter.js";
 import { bold } from "picocolors";
 import { randomUUID } from "node:crypto";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -26,7 +29,8 @@ export function scanCommand(): Command {
     .requiredOption("-c, --config <path>", "Path to configuration file")
     .option("--debug", "Enable debug output", false)
     .option("--no-ai", "Disable AI-powered evaluation", false)
-    .option("--format <format>", "Output format: json, csv, markdown, console")
+    .option("--ai", "Enable AI-powered evaluation", false)
+    .option("--format <format>", "Output format: json, csv, markdown, console, ai-insight")
     .option("-o, --output <path>", "Output file path")
     .option("--detail-level <level>", "Detail level: summary, detailed, full")
     .option("--force-ai", "Force re-evaluation with AI (ignore cache)", false)
@@ -53,6 +57,27 @@ export function scanCommand(): Command {
       }
       if (options.noAi) {
         config.ai.enabled = false;
+      }
+      if (options.ai) {
+        config.ai.enabled = true;
+      }
+
+      // Initialize AI evaluators
+      let aiEvaluators: AiEvaluator[] = [];
+      if (config.ai.enabled) {
+        try {
+          const llmClient = await createLlmFromConfig(config.ai);
+          const tokenBudget = createTokenBudget(
+            config.ai.maxTokensPerScan,
+            config.ai.warnAtTokensPercent,
+          );
+          aiEvaluators = initAiEvaluators(config, llmClient, tokenBudget);
+          logger.info(`AI enabled: ${config.ai.provider}/${config.ai.model} with ${aiEvaluators.length} evaluators`);
+        } catch (error) {
+          logger.warn(`Failed to initialize AI: ${(error as Error).message}`);
+          logger.warn("Continuing with rule-based evaluation only");
+          config.ai.enabled = false;
+        }
       }
 
       // Initialize database
@@ -145,7 +170,7 @@ export function scanCommand(): Command {
             );
 
             // Evaluate
-            const evaluation = evaluatePR(enriched, config);
+            const evaluation = await evaluatePR(enriched, config, aiEvaluators);
             allEvaluations.push(evaluation);
 
             // Store evaluation results
