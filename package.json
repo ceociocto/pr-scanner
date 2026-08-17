@@ -21,6 +21,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.39",
     "@ai-sdk/openai": "^4.0.42",
+    "@fastify/static": "^7.0.4",
     "@octokit/plugin-enterprise-compatibility": "^4.0.0",
     "@octokit/plugin-enterprise-server": "^10.0.0",
     "@octokit/plugin-throttling": "^10.0.0",
@@ -29,6 +30,7 @@
     "better-sqlite3": "^11.0.0",
     "commander": "^13.0.0",
     "drizzle-orm": "^0.39.0",
+    "fastify": "^4.29.1",
     "ollama-ai-provider": "^1.2.0",
     "ora": "^8.0.0",
     "papaparse": "^5.5.0",

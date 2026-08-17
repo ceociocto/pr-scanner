@@ -41,10 +41,6 @@ export class RepositoryRepository {
   /** Find by full name */
   findByName(fullName: string) {
     const db = getDb(this.config);
-    return db
-      .select()
-      .from(repositories)
-      .where(eq(repositories.fullName, fullName))
-      .get();
+    return db.select().from(repositories).where(eq(repositories.fullName, fullName)).get();
   }
 }

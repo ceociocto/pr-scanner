@@ -13,9 +13,7 @@ export class PullRequestRepository {
     return db
       .select()
       .from(pullRequests)
-      .where(
-        and(eq(pullRequests.repoId, repoId), eq(pullRequests.pullNumber, pullNumber)),
-      )
+      .where(and(eq(pullRequests.repoId, repoId), eq(pullRequests.pullNumber, pullNumber)))
       .get();
   }
 

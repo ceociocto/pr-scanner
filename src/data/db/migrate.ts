@@ -129,9 +129,9 @@ function ensureColumn(
   columnName: string,
   definition: string,
 ): void {
-  const columns = sqlite
-    .prepare(`PRAGMA table_info(${tableName})`)
-    .all() as Array<{ name: string }>;
+  const columns = sqlite.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
+    name: string;
+  }>;
 
   if (!columns.some((column) => column.name === columnName)) {
     sqlite.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);

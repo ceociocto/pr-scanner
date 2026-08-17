@@ -23,12 +23,7 @@ export class ScanResultRepository {
   }
 
   /** Create a repository-level scan run linked to a batch. */
-  create(
-    scanId: string,
-    repositoryId: number,
-    configHash: string,
-    batchId?: string,
-  ): void {
+  create(scanId: string, repositoryId: number, configHash: string, batchId?: string): void {
     const db = getDb(this.config);
     db.insert(scanRuns)
       .values({
