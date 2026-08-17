@@ -12,8 +12,11 @@ import { PullRequestRepository } from "../../data/repositories/pull-request.repo
 import { EvaluationRepository } from "../../data/repositories/evaluation.repository.js";
 import { ScanResultRepository } from "../../data/repositories/scan-result.repository.js";
 import { closeDb } from "../../data/db/connection.js";
-import { pc } from "picocolors";
+import { createReporter } from "../../reporters/reporter-factory.js";
+import { bold } from "picocolors";
 import { randomUUID } from "node:crypto";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 export function scanCommand(): Command {
   const cmd = new Command("scan");
@@ -91,7 +94,7 @@ export function scanCommand(): Command {
         const repoId = repoRepo.upsert(repoConfig.name, config.github.platform);
         const scanId = randomUUID();
 
-        logger.info(pc.bold(`\n📊 Scanning ${repoConfig.name}...`));
+        logger.info(bold(`\n📊 Scanning ${repoConfig.name}...`));
 
         try {
           // List merged PRs
@@ -183,9 +186,9 @@ export function scanCommand(): Command {
       const elapsed = Date.now() - startTime;
       const summary = scanResult.summary;
 
-      logger.info(pc.bold("\n" + "═".repeat(50)));
-      logger.info(pc.bold("  📋 Scan Summary"));
-      logger.info(pc.bold("═".repeat(50)));
+      logger.info(bold("\n" + "═".repeat(50)));
+      logger.info(bold("  📋 Scan Summary"));
+      logger.info(bold("═".repeat(50)));
       logger.info(`Total merged PRs scanned: ${scanResult.totalPullRequests}`);
       logger.info(`Average quality score: ${(summary.averageScore * 50).toFixed(1)}%`);
       logger.info(`  ✅ All pass: ${summary.allPassCount}`);
@@ -194,18 +197,16 @@ export function scanCommand(): Command {
       logger.info(`Data source: ${totalCached} cached, ${totalFetched} fetched from API`);
       logger.info(`Scan completed in ${formatDuration(elapsed)}`);
 
-      // Output JSON if requested
-      if (config.output.format === "json" || config.output.filePath) {
-        const jsonOutput = JSON.stringify(scanResult, null, 2);
-        if (config.output.filePath) {
-          const { writeFileSync, mkdirSync } = await import("node:fs");
-          const { dirname } = await import("node:path");
-          mkdirSync(dirname(config.output.filePath), { recursive: true });
-          writeFileSync(config.output.filePath, jsonOutput, "utf-8");
-          logger.success(`Report written to ${config.output.filePath}`);
-        } else if (config.output.format === "json") {
-          logger.output(jsonOutput + "\n");
-        }
+      // Output report using reporter system
+      const reporter = createReporter(config.output.format);
+      const output = reporter.render(scanResult);
+
+      if (config.output.filePath) {
+        mkdirSync(dirname(config.output.filePath), { recursive: true });
+        writeFileSync(config.output.filePath, output, "utf-8");
+        logger.success(`Report written to ${config.output.filePath}`);
+      } else {
+        logger.output(output + "\n");
       }
 
       // Cleanup
