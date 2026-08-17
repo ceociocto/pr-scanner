@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_CONFIG } from "../../../config/defaults.js";
@@ -126,5 +126,23 @@ describe("Dashboard API", () => {
     expect(pullRequest.json()).not.toHaveProperty("body");
     expect(pullRequest.json()).not.toHaveProperty("rawJson");
     expect(pullRequest.json().evaluations[1].metadata).toEqual({ issuePattern: "#123" });
+  });
+
+  it("serves the built app and supports SPA drilldown routes", async () => {
+    const config = createConfig();
+    const dashboardRoot = mkdtempSync(join(tmpdir(), "pr-scanner-dashboard-"));
+    tempDirectories.push(dashboardRoot);
+    writeFileSync(join(dashboardRoot, "index.html"), "<!doctype html><title>PR Signal</title>");
+
+    const server = createDashboardServer(config, { dashboardRoot });
+    openServers.push(server);
+
+    const home = await server.inject({ method: "GET", url: "/" });
+    const drilldown = await server.inject({ method: "GET", url: "/scans/batch-1" });
+
+    expect(home.statusCode).toBe(200);
+    expect(home.headers["content-type"]).toContain("text/html");
+    expect(drilldown.statusCode).toBe(200);
+    expect(drilldown.body).toContain("PR Signal");
   });
 });

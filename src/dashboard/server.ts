@@ -1,13 +1,34 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import fastifyStatic from "@fastify/static";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { runMigrations } from "../data/db/migrate.js";
 import { closeDb } from "../data/db/connection.js";
 import type { PrScannerConfig } from "../config/schema.js";
 import { DashboardService } from "./dashboard.service.js";
 
-export function createDashboardServer(config: PrScannerConfig): FastifyInstance {
+export const DASHBOARD_DIST_PATH = resolve(process.cwd(), "dist/dashboard");
+
+export type DashboardServerOptions = {
+  dashboardRoot?: string;
+};
+
+export function createDashboardServer(
+  config: PrScannerConfig,
+  options: DashboardServerOptions = {},
+): FastifyInstance {
   runMigrations(config);
   const service = new DashboardService(config);
   const app = Fastify({ logger: false });
+  const dashboardRoot = options.dashboardRoot ?? DASHBOARD_DIST_PATH;
+  const dashboardAvailable = existsSync(resolve(dashboardRoot, "index.html"));
+
+  if (dashboardAvailable) {
+    void app.register(fastifyStatic, {
+      root: dashboardRoot,
+      wildcard: false,
+    });
+  }
 
   app.get("/api/health", async () => ({
     ok: true,
@@ -66,6 +87,21 @@ export function createDashboardServer(config: PrScannerConfig): FastifyInstance 
   });
 
   app.get("/api/metadata", async () => service.getMetadata());
+
+  app.get("/*", async (request, reply) => {
+    if (request.url.startsWith("/api/")) {
+      return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Route not found" } });
+    }
+    if (!dashboardAvailable) {
+      return reply.code(503).send({
+        error: {
+          code: "DASHBOARD_BUILD_MISSING",
+          message: "Dashboard assets are missing. Run `npm run dashboard:build` first.",
+        },
+      });
+    }
+    return reply.sendFile("index.html");
+  });
 
   app.setErrorHandler((error, _request, reply) => {
     requestError(reply, error);
