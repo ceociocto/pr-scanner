@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1001,
+    "user": { "login": "bob" },
+    "state": "APPROVED",
+    "body": "Looks good, the redirect logic is correct.",
+    "submitted_at": "2025-06-15T09:00:00Z",
+    "commit_id": "sha1"
+  },
+  {
+    "id": 1002,
+    "user": { "login": "carol" },
+    "state": "COMMENTED",
+    "body": "Consider adding a test for the flash message.",
+    "submitted_at": "2025-06-15T08:30:00Z",
+    "commit_id": "sha1"
+  }
+]

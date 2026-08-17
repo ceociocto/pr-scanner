@@ -1,0 +1,20 @@
+[
+  {
+    "id": 2001,
+    "name": "CI / build",
+    "status": "completed",
+    "conclusion": "success",
+    "completed_at": "2025-06-15T09:30:00Z",
+    "started_at": "2025-06-15T09:20:00Z",
+    "head_sha": "abc123"
+  },
+  {
+    "id": 2002,
+    "name": "CI / test",
+    "status": "completed",
+    "conclusion": "success",
+    "completed_at": "2025-06-15T09:35:00Z",
+    "started_at": "2025-06-15T09:20:00Z",
+    "head_sha": "abc123"
+  }
+]
